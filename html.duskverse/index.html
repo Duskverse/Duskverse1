@@ -1,0 +1,1400 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUSKVERSE | Creative Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Marked JS (for AI text formatting) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mint: {
+                            400: '#2dd4bf', // Mint Green
+                            500: '#14b8a6', // Darker Mint
+                            600: '#0d9488',
+                            glow: 'rgba(45, 212, 191, 0.5)'
+                        },
+                        slate: {
+                            850: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f8fafc; /* White/Light Gray background */
+            color: #1e293b; /* Dark text */
+            user-select: none; /* ป้องกันการคลุมดำเลือกข้อความ */
+            -webkit-user-select: none;
+        }
+
+        .mint-shadow {
+            box-shadow: 0 4px 20px rgba(45, 212, 191, 0.15);
+            transition: all 0.3s ease;
+        }
+
+            .mint-shadow:hover {
+                box-shadow: 0 10px 25px rgba(45, 212, 191, 0.3);
+                transform: translateY(-5px);
+                border-color: #2dd4bf;
+            }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Slider Animation */
+        .slider-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ปรับความกว้างและระยะการเลื่อนตามจำนวนรูป (9 รูป x 2 ชุด = 18 items) */
+        .slider-track {
+            display: flex;
+            width: calc(300px * 18);
+            animation: scroll 60s linear infinite; /* ปรับเวลาให้ช้าลงเพื่อให้ดูทัน */
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(calc(-300px * 9));
+            }
+            /* เลื่อนไปครึ่งหนึ่ง (ชุดแรก 9 รูป) */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
+
+        /* Scan Animation */
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: #2dd4bf;
+            box-shadow: 0 0 10px #2dd4bf;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 2s linear infinite;
+            z-index: 20;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        /* AI Gradient Text */
+        .text-gradient-ai {
+            background: linear-gradient(to right, #2dd4bf, #3b82f6, #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bg-gradient-ai {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        /* Security Layer: Watermark Overlay */
+        .watermark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none; /* ให้กดทะลุได้ แต่บังสายตา */
+            z-index: 10;
+            opacity: 0.3;
+            background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' fill='%23ffffff' opacity='0.5' transform='rotate(-45 100 100)' text-anchor='middle'%3E© DUSKVERSE%3C/text%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<!-- oncontextmenu="return false" prevents right-click -->
+<body class="antialiased min-h-screen flex flex-col relative" oncontextmenu="return false">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass-panel">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <!-- โลโก้ใหม่ (พร้อม Fallback) -->
+                    <img src="578244168_122115623726996126_7767333052480765448_n.jpg"
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/150x150/0d9488/ffffff?text=Logo';"
+                         alt="DUSKVERSE Logo"
+                         class="w-10 h-10 rounded-full object-cover shadow-sm border-2 border-mint-400">
+
+                    <!-- ชื่อแบรนด์ (เก็บไว้ข้างๆ โลโก้) -->
+                    <span class="text-2xl font-bold tracking-wider text-slate-800">DUSK<span class="text-mint-500">VERSE</span></span>
+                </div>
+
+                <!-- เมนูส่วนหัว (Updated) -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="#" class="text-slate-600 hover:text-mint-600 px-3 py-2 rounded-md text-sm font-medium transition">หน้าแรก</a>
+                    <a href="#services" class="text-slate-600 hover:text-mint-600 px-3 py-2 rounded-md text-sm font-medium transition">บริการ</a>
+                    <a href="#contact" class="text-slate-600 hover:text-mint-600 px-3 py-2 rounded-md text-sm font-medium transition mr-2">ติดต่อเรา</a>
+
+                    <!-- ปุ่มทักหาฟรีแลนซ์ -->
+                    <a href="https://www.facebook.com/profile.php?id=61579883801734" target="_blank" class="bg-slate-900 hover:bg-black text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center mr-2">
+                        <i class="fab fa-facebook-messenger mr-2"></i>ทักหาฟรีแลนซ์
+                    </a>
+
+                    <!-- ปุ่มทางลัดไป Fastwork -->
+                    <a href="https://fastwork.co/user/duskverse.?source=web_marketplace_profile-menu_profile" target="_blank" class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-bold transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center" title="ไปที่ Fastwork">
+                        <span class="font-sans font-black tracking-tight">Fastwork</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="relative pt-32 pb-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center bg-white">
+        <!-- Decoration -->
+        <div class="absolute top-20 right-0 w-64 h-64 bg-mint-100 rounded-full filter blur-[80px] opacity-60 z-0"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-blue-100 rounded-full filter blur-[80px] opacity-60 z-0"></div>
+
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 z-10 text-slate-800">
+            เปลี่ยนไอเดียเป็น <span class="text-transparent bg-clip-text bg-gradient-to-r from-mint-500 to-blue-500">งานดีไซน์</span>
+        </h1>
+        <p class="mt-4 text-xl text-slate-500 max-w-2xl z-10 mb-8">
+            บริการออกแบบกราฟิกครบวงจร สั่งงานง่าย จองคิวรวดเร็ว พร้อมเริ่มงานทันที
+        </p>
+
+        <!-- AI Assistant Button -->
+        <button onclick="openAIModal()" class="relative z-10 group bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-full text-lg font-bold transition shadow-lg hover:shadow-mint-500/50 transform hover:-translate-y-1 flex items-center space-x-3 border border-slate-800">
+            <span class="text-2xl">✨</span>
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-mint-200 to-blue-200 group-hover:from-white group-hover:to-white transition-all">ให้ AI ช่วยคิดไอเดีย</span>
+        </button>
+        <p class="text-xs text-slate-400 mt-2 z-10">Powered by Gemini AI</p>
+    </div>
+
+    <!-- Portfolio Slider -->
+    <section class="py-8 bg-slate-50 overflow-hidden border-t border-b border-slate-200 select-none">
+        <div class="mb-6 text-center">
+            <p class="text-mint-600 font-semibold tracking-wide uppercase text-xs">Our Portfolio</p>
+            <h3 class="text-xl font-bold text-slate-800">ผลงานที่ผ่านมา</h3>
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-track">
+                <!-- ชุดที่ 1: รูปจริง 9 รูป (พร้อม Watermark และ Fallback) -->
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="576209158_122115621050996126_5724065928854603624_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1626785774573-4b7993125486?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Avatar Fanart">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="580767370_122116014656996126_192023389637164536_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Bus Stop Ad">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="578261197_122115757592996126_7969335534377732046_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Doctor Strange Fanart">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="579207285_122116014686996126_2112930370217976568_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1558655146-9f40138edfeb?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Building Logo Mockup">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="578256887_122115622844996126_8399176244884875184_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1572044162444-ad60f128bdea?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Movie Poster Style">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="579218760_122116014668996126_3401855721293437104_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Poster Ad">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="578275340_122115621626996126_5629132011923291690_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Legends Awaken">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="580861853_122116014692996126_156414990771713587_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1621600411688-4be93cd68504?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Gold Logo Design">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="555700712_122109937556996126_2057672359498896208_n.png" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Portfolio Collage">
+                    </div>
+                </div>
+
+
+                <!-- ชุดที่ 2: รูปชุดเดิมซ้ำอีกรอบ (Loop) -->
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="576209158_122115621050996126_5724065928854603624_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1626785774573-4b7993125486?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Avatar Fanart">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="580767370_122116014656996126_192023389637164536_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Bus Stop Ad">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="578261197_122115757592996126_7969335534377732046_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Doctor Strange Fanart">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="579207285_122116014686996126_2112930370217976568_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1558655146-9f40138edfeb?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Building Logo Mockup">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="578256887_122115622844996126_8399176244884875184_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1572044162444-ad60f128bdea?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Movie Poster Style">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="579218760_122116014668996126_3401855721293437104_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Poster Ad">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="578275340_122115621626996126_5629132011923291690_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Legends Awaken">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="580861853_122116014692996126_156414990771713587_n.jpg" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1621600411688-4be93cd68504?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Gold Logo Design">
+                    </div>
+                </div>
+                <div class="w-[300px] h-[200px] px-3 flex-shrink-0 relative group">
+                    <div class="watermark-overlay"></div>
+                    <div class="w-full h-full rounded-xl overflow-hidden shadow-md bg-slate-800">
+                        <img src="555700712_122109937556996126_2057672359498896208_n.png" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=600';" class="w-full h-full object-cover hover:scale-110 transition duration-500 pointer-events-none" alt="Portfolio Collage">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section id="services" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 z-10 w-full">
+        <div class="text-center mb-10">
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">บริการของเรา</h2>
+            <p class="text-xl text-mint-600 font-medium">
+                ทำการจองคิวได้ผ่านทางช่องทางด้านล่างนี้เลย
+                <i class="fas fa-arrow-down ml-2 animate-bounce"></i>
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            <!-- Service 1: Banner -->
+            <div onclick="openBooking('Banner Ads', 390)" class="group bg-white rounded-2xl p-6 cursor-pointer border border-slate-200 mint-shadow relative overflow-hidden select-none">
+                <div class="absolute top-0 right-0 bg-mint-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">HOT</div>
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-mint-50 rounded-lg text-mint-600">
+                        <i class="fas fa-ad text-2xl"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-400">เริ่มต้น/ภาพ</p>
+                        <p class="text-2xl font-bold text-slate-800">฿390</p>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 group-hover:text-mint-600 transition text-slate-800">ออกแบบแบนเนอร์</h3>
+                <p class="text-slate-500 text-sm mb-4">สำหรับโฆษณา Facebook, IG, Line ภาพสวย ดึงดูดสายตา</p>
+                <button class="w-full py-2 rounded-lg border border-mint-500 text-mint-600 hover:bg-mint-500 hover:text-white transition font-medium">จองคิวเลย</button>
+            </div>
+
+            <!-- Service 2: Poster -->
+            <div onclick="openBooking('Poster Design', 2590)" class="group bg-white rounded-2xl p-6 cursor-pointer border border-slate-200 mint-shadow select-none">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-purple-50 rounded-lg text-purple-600">
+                        <i class="fas fa-image text-2xl"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-400">เริ่มต้น</p>
+                        <p class="text-2xl font-bold text-slate-800">฿2,590</p>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 group-hover:text-purple-600 transition text-slate-800">ภาพโปสเตอร์</h3>
+                <p class="text-slate-500 text-sm mb-4">โปสเตอร์โปรโมทสินค้า อีเว้นท์ หรือภาพประกอบความละเอียดสูง</p>
+                <button class="w-full py-2 rounded-lg border border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white transition font-medium">จองคิวเลย</button>
+            </div>
+
+            <!-- Service 3: Logo -->
+            <div onclick="openBooking('Logo Branding', 2590)" class="group bg-white rounded-2xl p-6 cursor-pointer border border-slate-200 mint-shadow select-none">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <i class="fas fa-pen-nib text-2xl"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-400">เริ่มต้น</p>
+                        <p class="text-2xl font-bold text-slate-800">฿2,590</p>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 group-hover:text-blue-600 transition text-slate-800">ออกแบบโลโก้</h3>
+                <p class="text-slate-500 text-sm mb-4">สร้างแบรนด์ให้จดจำ ด้วยโลโก้ที่มีเอกลักษณ์ พร้อมไฟล์ใช้งานจริง</p>
+                <button class="w-full py-2 rounded-lg border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white transition font-medium">จองคิวเลย</button>
+            </div>
+        </div>
+
+        <!-- Quote Section -->
+        <div class="mt-16 max-w-3xl mx-auto text-center relative py-8 px-4">
+            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-slate-100 text-8xl opacity-50 font-serif">"</div>
+            <h3 class="text-2xl md:text-3xl font-bold text-slate-800 leading-relaxed relative z-10">
+                การลงทุนกับ <span class="text-mint-500">งานออกแบบที่ดี</span><br>
+                คือกุญแจสำคัญสู่ <span class="text-blue-600">ความสำเร็จของธุรกิจคุณ</span>
+            </h3>
+            <p class="mt-4 text-slate-500 text-lg">
+                "อย่าปล่อยให้ไอเดียดีๆ หยุดอยู่แค่ความคิด ให้ DUSKVERSE เปลี่ยนจินตนาการของคุณให้กลายเป็นภาพจริงที่ทรงพลัง สร้างยอดขาย และดึงดูดลูกค้าได้มากกว่าที่เคย"
+            </p>
+            <div class="mt-6 flex justify-center space-x-2">
+                <div class="w-12 h-1 bg-mint-400 rounded-full"></div>
+                <div class="w-3 h-1 bg-slate-300 rounded-full"></div>
+                <div class="w-3 h-1 bg-slate-300 rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- Workflow Section -->
+        <section class="py-16 bg-white relative overflow-hidden">
+            <!-- Background Decor -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-30 pointer-events-none">
+                <div class="absolute top-10 left-10 w-32 h-32 bg-mint-100 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-10 right-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl"></div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-slate-800">ขั้นตอนการทำงาน</h2>
+                    <p class="text-slate-500 mt-2">ระบบงานมาตรฐาน รวดเร็ว และตรวจสอบได้ทุกขั้นตอน</p>
+                </div>
+
+                <!-- Steps Grid (Mobile: Vertical, Desktop: Horizontal) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+                    <!-- Connecting Line (Desktop Only) -->
+                    <div class="hidden md:block absolute top-12 left-0 w-full h-1 bg-slate-100 -z-10"></div>
+
+                    <!-- Step 1 -->
+                    <div class="flex flex-col items-center text-center group">
+                        <div class="w-24 h-24 bg-white border-4 border-mint-100 rounded-full flex items-center justify-center mb-4 shadow-sm group-hover:border-mint-400 group-hover:shadow-md transition-all duration-300 relative">
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold text-sm border-2 border-white">1</div>
+                            <i class="fas fa-comments text-3xl text-mint-500 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <h4 class="font-bold text-lg text-slate-700 mb-2">คุยงาน & บรีฟ</h4>
+                        <p class="text-sm text-slate-500 leading-relaxed">ทักแชทคุยรายละเอียด สไตล์งานที่ชอบ และตกลงราคา</p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex flex-col items-center text-center group">
+                        <div class="w-24 h-24 bg-white border-4 border-mint-100 rounded-full flex items-center justify-center mb-4 shadow-sm group-hover:border-mint-400 group-hover:shadow-md transition-all duration-300 relative">
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold text-sm border-2 border-white">2</div>
+                            <i class="fas fa-calendar-check text-3xl text-blue-500 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <h4 class="font-bold text-lg text-slate-700 mb-2">จองคิว & ชำระเงิน</h4>
+                        <p class="text-sm text-slate-500 leading-relaxed">จองคิวผ่านเว็บและชำระมัดจำ 50% หรือเต็มจำนวน</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex flex-col items-center text-center group">
+                        <div class="w-24 h-24 bg-white border-4 border-mint-100 rounded-full flex items-center justify-center mb-4 shadow-sm group-hover:border-mint-400 group-hover:shadow-md transition-all duration-300 relative">
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold text-sm border-2 border-white">3</div>
+                            <i class="fas fa-paint-brush text-3xl text-purple-500 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <h4 class="font-bold text-lg text-slate-700 mb-2">ออกแบบ & ตรวจแก้</h4>
+                        <p class="text-sm text-slate-500 leading-relaxed">เริ่มงานทันที ส่งแบบให้ตรวจและแก้ไขตามคอมเมนต์</p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="flex flex-col items-center text-center group">
+                        <div class="w-24 h-24 bg-white border-4 border-mint-100 rounded-full flex items-center justify-center mb-4 shadow-sm group-hover:border-mint-400 group-hover:shadow-md transition-all duration-300 relative">
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold text-sm border-2 border-white">4</div>
+                            <i class="fas fa-file-export text-3xl text-green-500 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <h4 class="font-bold text-lg text-slate-700 mb-2">ส่งงาน & รีวิว</h4>
+                        <p class="text-sm text-slate-500 leading-relaxed">รับไฟล์งานคุณภาพสูง (AI, PNG, JPG) และรีวิวความพึงพอใจ</p>
+                    </div>
+                </div>
+
+                <!-- Review Stars Box -->
+                <div class="mt-16 bg-slate-900 rounded-2xl p-8 text-center relative overflow-hidden shadow-xl max-w-3xl mx-auto transform hover:-translate-y-1 transition duration-300">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-mint-500 rounded-full blur-[60px] opacity-20"></div>
+                    <div class="absolute bottom-0 left-0 w-32 h-32 bg-blue-500 rounded-full blur-[60px] opacity-20"></div>
+
+                    <h3 class="text-2xl font-bold text-white mb-2 relative z-10">ความพึงพอใจของคุณคือเป้าหมายของเรา</h3>
+                    <div class="flex justify-center items-center space-x-2 mb-4 text-yellow-400 text-2xl relative z-10">
+                        <i class="fas fa-star animate-[pulse_2s_infinite]"></i>
+                        <i class="fas fa-star animate-[pulse_2s_infinite_0.2s]"></i>
+                        <i class="fas fa-star animate-[pulse_2s_infinite_0.4s]"></i>
+                        <i class="fas fa-star animate-[pulse_2s_infinite_0.6s]"></i>
+                        <i class="fas fa-star animate-[pulse_2s_infinite_0.8s]"></i>
+                    </div>
+                    <p class="text-slate-300 text-sm relative z-10">"อย่าลืมให้คะแนน 5 ดาว เพื่อเป็นกำลังใจให้ฟรีแลนซ์ด้วยนะครับ"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fastwork Section -->
+        <div class="mt-16 max-w-2xl mx-auto">
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink-0 mx-4 text-slate-400 text-sm">ทางเลือกเพิ่มเติม</span>
+                <div class="flex-grow border-t border-slate-200"></div>
+            </div>
+
+            <div class="text-center mb-6">
+                <p class="text-lg text-slate-600 font-medium">หรือ อยากสั่งงานจ้างงานผ่านทาง Fastwork ก็ได้เช่นกัน</p>
+            </div>
+
+            <a href="https://fastwork.co/user/duskverse.?source=web_marketplace_profile-menu_profile" target="_blank" class="group bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md hover:border-blue-500 transition-all duration-300 flex items-center justify-between relative overflow-hidden">
+                <div class="absolute left-0 top-0 h-full w-1 bg-[#00234b] group-hover:bg-blue-600 transition-colors"></div>
+
+                <div class="flex flex-col items-start pl-2">
+                    <h4 class="font-bold text-2xl text-[#00234b] leading-tight group-hover:text-blue-700 transition-colors mb-1">Fastwork</h4>
+                    <div class="flex items-center text-sm text-green-600 font-medium">
+                        <!-- Circle Verified Badge -->
+                        <i class="fas fa-check-circle text-green-500 text-lg mr-1.5"></i>
+                        <span>Verified Freelance</span>
+                    </div>
+                </div>
+
+                <div class="hidden sm:flex items-center text-slate-400 group-hover:text-blue-600 transition-transform group-hover:translate-x-1">
+                    <span class="mr-2 text-sm font-medium">ไปที่โปรไฟล์</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Freelance Profile Section (New: Dual Profile) -->
+        <div class="mt-16 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- Profile 1: Jocho -->
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 transform hover:scale-[1.01] transition-transform duration-300 flex flex-col cursor-pointer" onclick="openProfileModal('jocho')">
+                <div class="relative h-64">
+                    <img src="S__36257797_0.jpg"
+                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600';"
+                         class="absolute inset-0 w-full h-full object-cover object-top pointer-events-none" alt="Jocho Profile">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 w-full p-6">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="bg-mint-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">Vice President</span>
+                        </div>
+                        <h3 class="text-white text-2xl font-bold">กฤษฎา ม้วนโคกสูง <span class="text-base text-slate-300 font-normal ml-1">(โจโฉ)</span></h3>
+                        <p class="text-mint-300 text-sm font-medium">รองผู้บริหาร Duskverse</p>
+                    </div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col">
+                    <div class="flex items-center mb-4 space-x-2">
+                        <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Graphic Designer</span>
+                        <span class="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Medical Student</span>
+                    </div>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
+                        อายุ 20 ปี ทำงานด้านออกแบบมากว่า 5 ปี เริ่มต้นจากฝ่ายกราฟิกคณะแพทยศาสตร์ ม.มหาสารคาม ปัจจุบันศึกษาอยู่คณะแพทยศาสตร์ ม.มหาสารคาม...
+                    </p>
+                    <div class="pt-4 border-t border-slate-100 flex justify-between items-center">
+                        <div class="flex items-center text-green-600 font-semibold text-sm">
+                            <i class="fas fa-check-circle text-lg mr-1.5"></i>
+                            <span>Verified Freelance</span>
+                        </div>
+                        <span class="text-blue-500 text-sm font-medium hover:underline">ดูเพิ่มเติม</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile 2: Elida (New) -->
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 transform hover:scale-[1.01] transition-transform duration-300 flex flex-col cursor-pointer" onclick="openProfileModal('elida')">
+                <div class="relative h-64">
+                    <img src="S__36265986.jpg"
+                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=600';"
+                         class="absolute inset-0 w-full h-full object-cover object-top pointer-events-none" alt="Elida Profile">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 w-full p-6">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="bg-purple-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">Executive</span>
+                        </div>
+                        <!-- Added Nickname "พู่กัน" -->
+                        <h3 class="text-white text-2xl font-bold">เอลิดา เดวีส์ <span class="text-base text-slate-300 font-normal ml-1">(พู่กัน)</span></h3>
+                        <p class="text-purple-300 text-sm font-medium">ผู้บริหาร Duskverse (ฝ่ายการเงิน)</p>
+                    </div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col">
+                    <div class="flex items-center mb-4 space-x-2">
+                        <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Finance Manager</span>
+                        <span class="bg-pink-50 text-pink-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Management</span>
+                    </div>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
+                        อายุ 20 ปี ผู้บริหารรุ่นใหม่ไฟแรง ดูแลและบริหารจัดการด้านการเงินทั้งหมดของ Duskverse เพื่อให้ระบบงานและการชำระเงินเป็นไปอย่างราบรื่นและโปร่งใสที่สุด...
+                    </p>
+                    <div class="pt-4 border-t border-slate-100 flex justify-between items-center">
+                        <div class="flex items-center text-green-600 font-semibold text-sm">
+                            <i class="fas fa-check-circle text-lg mr-1.5"></i>
+                            <span>Verified Executive</span>
+                        </div>
+                        <span class="text-blue-500 text-sm font-medium hover:underline">ดูเพิ่มเติม</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Disclaimer Text (New) -->
+        <div class="text-center mt-6 max-w-3xl mx-auto px-4">
+            <p class="text-xs text-slate-400">
+                * เว็บไซต์นี้จัดทำขึ้นเพื่ออำนวยความสะดวกในการนำเสนผลงานและจองคิวงานเท่านั้น ไม่ได้จดทะเบียนในรูปแบบบริษัท หรือนิติบุคคลแต่อย่างใด ดำเนินงานในรูปแบบฟรีแลนซ์อิสระ
+            </p>
+        </div>
+
+        <!-- Why Choose Us Section (New) -->
+        <div class="mt-24 mb-16">
+            <div class="text-center mb-12">
+                <span class="text-mint-500 font-bold tracking-wider uppercase text-sm">Our Advantages</span>
+                <h2 class="text-3xl font-bold text-slate-800 mt-2">ทำไมต้องเลือก <span class="text-slate-900">DUSKVERSE?</span></h2>
+                <div class="w-20 h-1 bg-mint-400 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+                <!-- Reason 1 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:border-mint-200 transition group text-center">
+                    <div class="w-16 h-16 bg-mint-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-mint-100 transition">
+                        <i class="fas fa-bolt text-2xl text-mint-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">รวดเร็วทันใจ ไม่ดองงาน</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed">
+                        เราเข้าใจว่าเวลาเป็นสิ่งมีค่า การันตีส่งงานตรงตามกำหนด รวดเร็วทันใช้งาน ธุรกิจของคุณไม่ต้องรอนาน
+                    </p>
+                </div>
+
+                <!-- Reason 2 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:border-blue-200 transition group text-center">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-100 transition">
+                        <i class="fas fa-gem text-2xl text-blue-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">ดีไซน์เอกลักษณ์ ระดับ 5 ดาว</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed">
+                        งานออกแบบที่ไม่ซ้ำใคร สร้างภาพจำที่โดดเด่นให้กับแบรนด์ การันตีคุณภาพด้วยรีวิว 5 ดาวเต็มจากลูกค้าจริง
+                    </p>
+                </div>
+
+                <!-- Reason 3 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:border-purple-200 transition group text-center">
+                    <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-100 transition">
+                        <i class="fas fa-hand-holding-heart text-2xl text-purple-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">ราคาคุ้มค่า จริงใจ</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed">
+                        เริ่มต้นเพียงหลักร้อย แต่คุณภาพหลักพัน ไม่มีค่าใช้จ่ายแฝง ดูแลดุจญาติมิตร คุยง่าย เป็นกันเอง
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning Section -->
+        <div class="mt-12 max-w-4xl mx-auto bg-red-50 border-l-4 border-red-500 p-6 rounded-r-xl shadow-sm">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl mt-1"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-bold text-red-800 mb-2">⚠️ คำเตือน: โปรดระวังมิจฉาชีพ!</h3>
+                    <div class="text-red-700 text-sm space-y-2 leading-relaxed">
+                        <p>
+                            เนื่องจากเพจเก่าถูกผู้ไม่หวังดีแฮคข้อมูลไป ทำให้ไม่สามารถเข้าใช้งานได้ <span class="font-bold underline">เพจนี้คือเพจจริงเท่านั้น</span>
+                        </p>
+                        <ul class="list-disc list-inside ml-1 space-y-1">
+                            <li>ชื่อเพจต้องเป็น <span class="font-bold bg-red-100 px-1 rounded">Duskverse</span> (ไม่มีจุดเติมท้าย)</li>
+                            <li>ชื่อบัญชีธนาคารต้องเป็น <span class="font-bold bg-red-100 px-1 rounded">Duskverse (นายกฤษฎา ม้วนโคกสูง)</span> เท่านั้น</li>
+                        </ul>
+                        <p class="font-semibold mt-2">
+                            <i class="fas fa-ban mr-1"></i> หากเป็นชื่อบัญชีอื่นนอกจากนี้ ถือว่าเป็นมิจฉาชีพทั้งสิ้น โปรดอย่าโอนเงินเด็ดขาด!
+                        </p>
+                        <p class="text-xs text-red-600 mt-2 pt-2 border-t border-red-200 font-medium">
+                            * ทางเราไม่มีส่วนเกี่ยวข้องใดๆ ทั้งสิ้น กับเพจปลอมหรือบัญชีอื่นนอกเหนือจากที่ระบุไว้ข้างต้น
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="bg-slate-50 py-16 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-slate-800">ติดต่อเรา</h2>
+                <p class="text-slate-500 mt-2">สอบถามข้อมูลเพิ่มเติมหรือปรึกษางานออกแบบได้ตลอด 24 ชม.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <!-- Facebook Page -->
+                <a href="https://www.facebook.com/profile.php?id=61579883801734" target="_blank" class="flex flex-col items-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition border border-slate-100 group cursor-pointer">
+                    <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-600 transition duration-300">
+                        <i class="fab fa-facebook-f text-2xl text-blue-600 group-hover:text-white transition duration-300"></i>
+                    </div>
+                    <h3 class="font-semibold text-slate-800 text-lg">Duskverse</h3>
+                    <p class="text-slate-500 mt-1">Facebook Page</p>
+                </a>
+
+                <!-- Personal Facebook -->
+                <a href="https://www.facebook.com/kidsada.muankhoksung/" target="_blank" class="flex flex-col items-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition border border-slate-100 group cursor-pointer">
+                    <div class="w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-600 transition duration-300">
+                        <i class="fas fa-user-circle text-2xl text-indigo-600 group-hover:text-white transition duration-300"></i>
+                    </div>
+                    <h3 class="font-semibold text-slate-800 text-lg">Aidsada Muankhoksung</h3>
+                    <p class="text-slate-500 mt-1">Facebook ส่วนตัว</p>
+                </a>
+
+                <!-- Phone -->
+                <a href="tel:0934703789" class="flex flex-col items-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition border border-slate-100 group cursor-pointer">
+                    <div class="w-14 h-14 bg-mint-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-mint-500 transition duration-300">
+                        <i class="fas fa-phone-alt text-2xl text-mint-600 group-hover:text-white transition duration-300"></i>
+                    </div>
+                    <h3 class="font-semibold text-slate-800 text-lg">093-470-3789</h3>
+                    <p class="text-slate-500 mt-1 font-mono">เบอร์โทรศัพท์</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profile Modal (New) -->
+    <div id="profileModal" class="fixed inset-0 z-[90] hidden flex-col items-center justify-center bg-slate-900 bg-opacity-90 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden relative flex flex-col md:flex-row transform transition-all scale-100">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 z-20 bg-black/20 hover:bg-black/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition backdrop-blur-sm">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <!-- Image Side -->
+            <div class="md:w-2/5 relative h-64 md:h-auto bg-slate-100">
+                <img id="modalProfileImg" src="" class="absolute inset-0 w-full h-full object-cover" alt="Profile">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:hidden"></div>
+            </div>
+
+            <!-- Content Side -->
+            <div class="md:w-3/5 p-8 md:p-12 flex flex-col justify-center bg-white">
+                <div class="mb-6">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span id="modalRoleBadge" class="bg-slate-800 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Role</span>
+                        <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center">
+                            <i class="fas fa-check-circle mr-1"></i> Verified
+                        </span>
+                    </div>
+                    <h2 class="text-4xl font-bold text-slate-800 mb-1"><span id="modalName">Name</span> <span class="text-slate-400 font-normal text-2xl" id="modalNickname">(Nick)</span></h2>
+                    <p id="modalPosition" class="text-xl text-mint-600 font-medium">Position</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">About</h4>
+                        <p id="modalBio" class="text-slate-600 leading-relaxed text-lg">
+                            Bio text goes here...
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Connect</h4>
+                        <a id="modalFacebookLink" href="#" target="_blank" class="inline-flex items-center space-x-3 text-slate-700 hover:text-blue-600 transition group">
+                            <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center group-hover:bg-blue-50 transition">
+                                <i class="fab fa-facebook-f text-xl"></i>
+                            </div>
+                            <span class="font-medium">Facebook Profile</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1: Booking Details -->
+    <div id="bookingModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeModal('bookingModal')"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="px-6 py-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-semibold text-slate-800">รายละเอียดการจอง</h3>
+                        <button onclick="closeModal('bookingModal')" class="text-slate-400 hover:text-slate-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <form id="bookingForm" onsubmit="goToPayment(event)" class="space-y-4">
+                        <!-- Service Selected -->
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <div>
+                                    <p class="text-xs text-slate-500 uppercase">บริการที่เลือก</p>
+                                    <p id="selectedService" class="font-semibold text-mint-600 text-lg">Banner Ads</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-slate-500 uppercase">ราคาต่อหน่วย</p>
+                                    <p id="unitPriceDisplay" class="font-medium text-slate-700">฿390</p>
+                                </div>
+                            </div>
+
+                            <!-- Quantity Input -->
+                            <div class="flex items-center justify-between border-t border-slate-200 pt-3 mt-2">
+                                <div class="flex items-center space-x-3">
+                                    <label for="quantity" class="text-sm font-medium text-slate-600">จำนวนชิ้นงาน:</label>
+                                    <input type="number" id="quantity" value="1" min="1" max="100" class="w-20 bg-white border border-slate-300 rounded-md px-2 py-1 text-center text-slate-800 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500" onchange="updateTotalPrice()" onkeyup="updateTotalPrice()">
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-slate-500 uppercase">ราคารวม</p>
+                                    <p id="selectedPrice" class="font-bold text-slate-800 text-xl">฿390</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">วันที่ต้องการงาน</label>
+                                <input type="date" id="date" required class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">เวลา</label>
+                                <input type="time" id="time" required class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">ชื่อผู้ติดต่อ</label>
+                            <input type="text" id="name" required class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">เบอร์โทรศัพท์</label>
+                            <input type="tel" id="tel" required class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">บรีฟงาน</label>
+                            <textarea id="details" rows="3" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-slate-900 transform hover:-translate-y-0.5 transition mt-4">
+                            ดำเนินการต่อ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Payment -->
+    <div id="paymentModal" class="fixed inset-0 z-[55] hidden overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity backdrop-blur-sm"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full">
+
+                <!-- Payment Header -->
+                <div class="bg-mint-500 p-4 text-white text-center">
+                    <h3 class="text-lg font-bold">ชำระเงิน</h3>
+                    <p class="text-mint-100 text-sm">เลือกรูปแบบการชำระเงินที่คุณต้องการ</p>
+                </div>
+
+                <div class="p-6 text-center">
+
+                    <!-- Payment Options Toggle -->
+                    <div class="flex bg-slate-100 p-1 rounded-lg mb-6">
+                        <button id="btnDeposit" onclick="setPaymentMode('deposit')" class="flex-1 py-2 text-sm font-medium rounded-md shadow-sm bg-white text-mint-600 transition-all duration-200">
+                            มัดจำ 50%
+                        </button>
+                        <button id="btnFull" onclick="setPaymentMode('full')" class="flex-1 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all duration-200">
+                            จ่ายเต็มจำนวน
+                        </button>
+                    </div>
+
+                    <!-- Price Breakdown -->
+                    <div class="flex justify-between mb-2 text-slate-500 text-sm">
+                        <span>ราคางานทั้งหมด</span>
+                        <span id="payFullPrice">฿0</span>
+                    </div>
+                    <div class="flex justify-between mb-6 text-slate-800 font-bold text-xl border-b border-slate-100 pb-4">
+                        <span id="payLabel">ยอดที่ต้องโอน</span>
+                        <span id="payAmountDisplay" class="text-mint-600">฿0</span>
+                    </div>
+
+                    <!-- QR Code Mockup (Updated Image) -->
+                    <div class="bg-white p-4 border border-slate-200 rounded-xl inline-block shadow-sm mb-4">
+                        <img src="S__36233219.jpg"
+                             onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DUSKVERSE';"
+                             alt="QR Code สำหรับโอนเงิน"
+                             class="w-40 h-40 mx-auto">
+                        <p class="text-xs text-slate-400 mt-2">DUSKVERSE STUDIO LTD.</p>
+                    </div>
+
+                    <div class="text-left bg-slate-50 p-3 rounded-lg mb-6">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <i class="fas fa-university text-slate-400"></i>
+                            <div>
+                                <p class="text-xs text-slate-500">ธนาคารกสิกรไทย</p>
+                                <p class="font-mono text-slate-700 font-bold">073-8596986</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-user text-slate-400"></i>
+                            <div>
+                                <p class="text-xs text-slate-500">ชื่อบัญชี</p>
+                                <p class="text-sm text-slate-700">ดัสค์เวิร์ส สตูดิโอ</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slip Upload -->
+                    <div class="mb-6 text-left">
+                        <label class="block text-sm font-medium text-slate-600 mb-2">หลักฐานการโอนเงิน (สลิป)</label>
+                        <div class="relative">
+                            <input type="file" id="slipFile" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-mint-50 file:text-mint-600 hover:file:bg-mint-100 cursor-pointer border border-slate-300 rounded-lg p-2">
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">* กรุณาแนบสลิปเพื่อยืนยันการชำระเงิน</p>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button onclick="closeModal('paymentModal')" class="flex-1 py-3 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition">
+                            ยกเลิก
+                        </button>
+                        <button onclick="confirmPayment()" class="flex-1 bg-mint-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-mint-600 transition">
+                            แจ้งโอนเงิน
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Loading Modal -->
+    <div id="verificationModal" class="fixed inset-0 z-[70] hidden flex-col items-center justify-center bg-slate-900 bg-opacity-90 backdrop-blur-sm">
+        <div class="text-center p-8 relative w-64 h-64 flex flex-col items-center justify-center">
+            <!-- Scan Effect Box -->
+            <div class="absolute inset-0 border-2 border-mint-500/30 rounded-2xl overflow-hidden">
+                <div class="scan-line"></div>
+            </div>
+
+            <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-mint-500 animate-pulse">
+                <i class="fas fa-search-dollar text-4xl text-mint-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">กำลังตรวจสอบสลิป...</h3>
+            <p class="text-slate-400 text-sm">ระบบกำลังยืนยันความถูกต้องกับธนาคาร</p>
+        </div>
+    </div>
+
+    <!-- AI Assistant Modal -->
+    <div id="aiModal" class="fixed inset-0 z-[80] hidden flex-col items-center justify-center bg-slate-900 bg-opacity-80 backdrop-blur-sm px-4 transition-opacity duration-300">
+        <div class="bg-white p-0 rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all scale-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="bg-gradient-ai p-6 border-b border-slate-700/50 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-mint-500 rounded-full blur-[50px] opacity-20"></div>
+                <div class="flex justify-between items-center relative z-10">
+                    <h3 class="text-2xl font-bold text-white flex items-center">
+                        <span class="mr-2 text-3xl">✨</span> AI Creative Assistant
+                    </h3>
+                    <button onclick="closeAIModal()" class="text-slate-400 hover:text-white transition">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-mint-200 text-sm mt-1">ให้ AI ช่วยคิดคอนเซปต์ สโลแกน และมู้ดโทนสำหรับงานออกแบบของคุณ</p>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">คุณต้องการออกแบบอะไร?</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="aiInput" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500 transition" placeholder="เช่น แบนเนอร์ร้านกาแฟ, โปสเตอร์คอนเสิร์ตร็อค, โลโก้ร้านดอกไม้...">
+                        <button onclick="generateIdeas()" class="bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-xl font-bold shadow-lg transition flex items-center whitespace-nowrap group">
+                            <span class="group-hover:hidden">สร้างไอเดีย</span>
+                            <span class="hidden group-hover:inline">Generate</span>
+                            <i class="fas fa-magic ml-2 group-hover:animate-pulse"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="aiLoading" class="hidden py-12 text-center">
+                    <div class="flex justify-center mb-4 space-x-2">
+                        <div class="w-3 h-3 bg-mint-500 rounded-full animate-bounce"></div>
+                        <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    </div>
+                    <p class="text-slate-500 animate-pulse">กำลังรวบรวมไอเดียสุดเจ๋ง...</p>
+                </div>
+
+                <!-- Result Area -->
+                <div id="aiResult" class="hidden">
+                    <div class="bg-slate-50 rounded-xl p-6 border border-slate-100 prose prose-slate max-w-none">
+                        <!-- Content will be injected here -->
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button onclick="useIdea()" class="bg-mint-500 hover:bg-mint-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition flex items-center">
+                            <i class="fas fa-check mr-2"></i> นำไปใช้กับบรีฟ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div id="successOverlay" class="fixed inset-0 z-[60] hidden flex-col items-center justify-center bg-white bg-opacity-95 backdrop-blur-md">
+        <div class="text-center p-8 animate-bounce-in">
+            <div class="w-20 h-20 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-check text-4xl text-mint-500"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">จองคิวสำเร็จ!</h2>
+            <p class="text-slate-500 mb-6">เราได้รับข้อมูลการชำระเงินแล้ว</p>
+
+            <div class="bg-slate-50 p-6 rounded-xl border border-mint-200 border-dashed max-w-sm mx-auto relative shadow-sm">
+                <p class="text-sm text-slate-400 uppercase tracking-wider mb-1">ORDER ID</p>
+                <h1 id="orderIdDisplay" class="text-4xl font-mono font-bold text-mint-600 tracking-wider mb-4">DV-XXXX</h1>
+
+                <div class="text-left text-sm space-y-2 border-t border-slate-200 pt-4">
+                    <div class="flex justify-between"><span class="text-slate-500">บริการ:</span> <span id="successService" class="text-slate-800 font-medium">...</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">ยอดที่ชำระ:</span> <span id="successPaid" class="text-mint-600 font-bold">...</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">ยอดคงเหลือ:</span> <span id="successBalance" class="text-slate-800">...</span></div>
+                    <div class="flex justify-between mt-2 pt-2 border-t border-slate-100"><span class="text-slate-500">สถานะ:</span> <span class="text-slate-800 font-medium">รอการตรวจสอบ</span></div>
+                </div>
+            </div>
+
+            <button onclick="closeSuccess()" class="mt-8 px-8 py-3 bg-slate-800 text-white rounded-full shadow hover:bg-slate-900 transition">
+                ปิดหน้าต่าง
+            </button>
+        </div>
+    </div>
+
+    <!-- Cookie Consent Modal -->
+    <div id="cookieConsentModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center bg-slate-900 bg-opacity-80 backdrop-blur-sm px-4 transition-opacity duration-300">
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all scale-100 animate-[fadeIn_0.5s_ease-out]">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-mint-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                    <i class="fas fa-cookie-bite text-3xl text-mint-600"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-3">จัดการคุกกี้</h3>
+                <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                    Duskverse มีการเก็บและใช้งานคุกกี้เพื่อช่วยปรับปรุงพัฒนาประสบการณ์การใช้งานให้ดีขึ้นเมื่อคุณเข้าเยี่ยมชมเว็บไซต์ของเรา คุณสามารถเลือกให้ความยินยอมคุกกี้แต่ละประเภทได้ (ยกเว้นคุกกี้ที่จำเป็น)
+                    <a href="#" class="text-mint-600 hover:underline font-medium">นโยบายคุกกี้</a>
+                </p>
+                <div class="flex space-x-3">
+                    <button onclick="handleCookie('decline')" class="flex-1 py-2.5 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition font-medium">
+                        ยกเลิก
+                    </button>
+                    <button onclick="handleCookie('accept')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition font-medium shadow-lg">
+                        ตกลง
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white py-8 border-t border-slate-100 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400 text-sm">© 2023 DUSKVERSE STUDIO. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- AI Feature (Gemini) ---
+        const apiKey = ""; // The environment provides the key automatically
+        let generatedIdea = "";
+
+        function openAIModal() {
+            document.getElementById('aiModal').classList.remove('hidden');
+            document.getElementById('aiModal').classList.add('flex');
+        }
+
+        function closeAIModal() {
+            document.getElementById('aiModal').classList.add('hidden');
+            document.getElementById('aiModal').classList.remove('flex');
+        }
+
+        async function generateIdeas() {
+            const input = document.getElementById('aiInput').value;
+            if (!input) return;
+
+            // UI Loading
+            document.getElementById('aiLoading').classList.remove('hidden');
+            document.getElementById('aiResult').classList.add('hidden');
+
+            const prompt = `คุณคือ Creative Director มืออาชีพ ของ DUSKVERSE Studio หน้าที่ของคุณคือช่วยลูกค้าคิดคอนเซปต์งานกราฟิกจากคีย์เวิร์ดสั้นๆ ที่ลูกค้าให้มา: "${input}"
+
+สิ่งที่คุณต้องตอบกลับ (ในรูปแบบ HTML tags เพื่อความสวยงาม และใช้ภาษาไทย):
+1. <h3>หัวข้อ/สโลแกนที่น่าสนใจ:</h3> (ขอ 2-3 ตัวเลือก เป็น bullet points)
+2. <h3>สไตล์และอารมณ์ (Mood & Tone):</h3> อธิบายสั้นๆ
+3. <h3>คู่สีที่แนะนำ (Color Palette):</h3> ระบุโค้ดสีหรือชื่อสี
+4. <h3>องค์ประกอบภาพ:</h3> แนะนำสิ่งที่ควรมีในภาพ
+
+ตอบกลับเป็นภาษาไทย น้ำเสียงเป็นกันเอง สร้างสรรค์ และกระชับ`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    generatedIdea = text; // Store raw text (or HTML)
+                    // Convert Markdown to HTML
+                    document.querySelector('#aiResult .prose').innerHTML = marked.parse(text);
+
+                    document.getElementById('aiLoading').classList.add('hidden');
+                    document.getElementById('aiResult').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้', 'error');
+                document.getElementById('aiLoading').classList.add('hidden');
+            }
+        }
+
+        function useIdea() {
+            // Strip HTML tags for the text area
+            const cleanText = generatedIdea.replace(/<[^>]*>?/gm, '');
+            document.getElementById('details').value = cleanText;
+            closeAIModal();
+
+            // Scroll to form
+            document.getElementById('bookingModal').classList.remove('hidden');
+            if (document.getElementById('bookingModal').classList.contains('hidden')) {
+                openBooking('General Inquiry', 0);
+            }
+        }
+
+
+        // State
+        let currentService = '';
+        let unitPrice = 0; // Base price per item
+        let currentPrice = 0; // Total price (unit * qty)
+        let bookingData = {};
+
+        // Payment State
+        let paymentMode = 'deposit'; // 'deposit' or 'full'
+        let payAmount = 0;
+        let remainingBalance = 0;
+
+        // Profile Data
+        const profiles = {
+            'jocho': {
+                name: 'กฤษฎา ม้วนโคกสูง',
+                nickname: 'โจโฉ',
+                position: 'รองผู้บริหาร Duskverse',
+                role: 'Graphic Designer',
+                img: 'S__36257797_0.jpg',
+                bio: 'อายุ 20 ปี ทำงานด้านออกแบบมากว่า 5 ปี เริ่มต้นจากฝ่ายกราฟิกคณะแพทยศาสตร์ ม.มหาสารคาม (งานเสริม) ปัจจุบันศึกษาอยู่คณะแพทยศาสตร์ ม.มหาสารคาม การออกแบบไม่เหมือนใคร รวดเร็วทันใจ งานคุณภาพระดับ 5 ดาว (อิงจากรีวิว Fastwork)',
+                facebook: 'https://www.facebook.com/kidsada.muankhoksung/'
+            },
+            'elida': {
+                name: 'เอลิดา เดวีส์',
+                nickname: 'พู่กัน',
+                position: 'ผู้บริหาร Duskverse (ฝ่ายการเงิน)',
+                role: 'Finance Manager',
+                img: 'S__36265986.jpg',
+                bio: 'อายุ 20 ปี ผู้บริหารรุ่นใหม่ไฟแรง ดูแลและบริหารจัดการด้านการเงินทั้งหมดของ Duskverse เพื่อให้ระบบงานและการชำระเงินเป็นไปอย่างราบรื่นและโปร่งใสที่สุด ตรวจสอบความถูกต้องแม่นยำทุกขั้นตอน',
+                facebook: '#' // Add actual link if available
+            }
+        };
+
+        // Profile Modal Functions
+        function openProfileModal(profileKey) {
+            const profile = profiles[profileKey];
+            if (!profile) return;
+
+            document.getElementById('modalProfileImg').src = profile.img;
+            document.getElementById('modalName').innerText = profile.name;
+            document.getElementById('modalNickname').innerText = `(${profile.nickname})`;
+            document.getElementById('modalPosition').innerText = profile.position;
+            document.getElementById('modalRoleBadge').innerText = profile.role;
+            document.getElementById('modalBio').innerText = profile.bio;
+            document.getElementById('modalFacebookLink').href = profile.facebook;
+
+            const modal = document.getElementById('profileModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Cookie Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const cookieConsent = localStorage.getItem('duskverse_cookie_consent');
+            if (!cookieConsent) {
+                // Show modal with a slight delay for effect
+                setTimeout(() => {
+                    const modal = document.getElementById('cookieConsentModal');
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }, 500);
+            }
+        });
+
+        function handleCookie(action) {
+            localStorage.setItem('duskverse_cookie_consent', action);
+            const modal = document.getElementById('cookieConsentModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Generate Random String for ID
+        function generateRandomString(length) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Open Booking Modal
+        function openBooking(serviceName, price) {
+            currentService = serviceName;
+            unitPrice = price;
+
+            // Reset Quantity to 1
+            document.getElementById('quantity').value = 1;
+
+            document.getElementById('selectedService').innerText = serviceName;
+            document.getElementById('unitPriceDisplay').innerText = '฿' + price.toLocaleString();
+
+            // Calculate Initial Total
+            updateTotalPrice();
+
+            // Set default date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('date').valueAsDate = tomorrow;
+
+            document.getElementById('bookingModal').classList.remove('hidden');
+        }
+
+        // Calculate Total Price based on Quantity
+        function updateTotalPrice() {
+            const qtyInput = document.getElementById('quantity');
+            let qty = parseInt(qtyInput.value);
+
+            if (isNaN(qty) || qty < 1) {
+                qty = 1;
+                // qtyInput.value = 1; // Optional: Auto-correct visually
+            }
+
+            currentPrice = unitPrice * qty;
+            document.getElementById('selectedPrice').innerText = '฿' + currentPrice.toLocaleString();
+        }
+
+        // Step 1: Submit Booking Form -> Go to Payment
+        function goToPayment(e) {
+            e.preventDefault();
+
+            // Ensure price is updated before proceeding
+            updateTotalPrice();
+            const qty = document.getElementById('quantity').value;
+
+            // Store Data
+            bookingData = {
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value,
+                name: document.getElementById('name').value,
+                tel: document.getElementById('tel').value,
+                details: document.getElementById('details').value,
+                quantity: qty
+            };
+
+            // Initialize Payment Modal (Default to Deposit 50%)
+            document.getElementById('payFullPrice').innerText = '฿' + currentPrice.toLocaleString();
+            setPaymentMode('deposit'); // Default mode
+
+            // Reset File Input
+            document.getElementById('slipFile').value = "";
+
+            // Switch Modals
+            document.getElementById('bookingModal').classList.add('hidden');
+            document.getElementById('paymentModal').classList.remove('hidden');
+        }
+
+        // Function to toggle Payment Mode
+        function setPaymentMode(mode) {
+            paymentMode = mode;
+            const btnDeposit = document.getElementById('btnDeposit');
+            const btnFull = document.getElementById('btnFull');
+
+            // Calculate amounts
+            if (mode === 'deposit') {
+                payAmount = Math.ceil(currentPrice * 0.5); // 50% Deposit
+                remainingBalance = currentPrice - payAmount;
+
+                // UI Styling
+                btnDeposit.className = "flex-1 py-2 text-sm font-medium rounded-md shadow-sm bg-white text-mint-600 transition-all duration-200";
+                btnFull.className = "flex-1 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all duration-200";
+
+            } else {
+                payAmount = currentPrice; // Full Payment
+                remainingBalance = 0;
+
+                // UI Styling
+                btnFull.className = "flex-1 py-2 text-sm font-medium rounded-md shadow-sm bg-white text-mint-600 transition-all duration-200";
+                btnDeposit.className = "flex-1 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all duration-200";
+            }
+
+            // Update Display
+            document.getElementById('payAmountDisplay').innerText = '฿' + payAmount.toLocaleString();
+        }
+
+        // Step 2: Confirm Payment -> Show Success
+        function confirmPayment() {
+            // 1. Check if slip is uploaded
+            const slipInput = document.getElementById('slipFile');
+            if (slipInput.files.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณาแนบสลิป',
+                    text: 'โปรดอัปโหลดหลักฐานการโอนเงินก่อนยืนยัน',
+                    confirmButtonColor: '#14b8a6',
+                    confirmButtonText: 'ตกลง'
+                });
+                return;
+            }
+
+            // 2. Close Payment Modal & Show Verification Modal
+            document.getElementById('paymentModal').classList.add('hidden');
+            document.getElementById('verificationModal').classList.remove('hidden');
+            document.getElementById('verificationModal').classList.add('flex');
+
+            // 3. Simulate Verification Process (3 seconds delay)
+            setTimeout(() => {
+                finishVerification();
+            }, 3000);
+        }
+
+        function finishVerification() {
+            // Close Verification Modal
+            document.getElementById('verificationModal').classList.add('hidden');
+            document.getElementById('verificationModal').classList.remove('flex');
+
+            // Generate Order ID (Shortened)
+            // Format: DV-YYMM-XXXX (Example: DV-2310-A1B2)
+            const today = new Date();
+            const dateStr = today.toISOString().slice(2, 7).replace(/-/g, ""); // YYMM
+            const uniqueSuffix = generateRandomString(4); // 4 chars is enough for daily uniqueness
+            const orderId = `DV-${dateStr}-${uniqueSuffix}`;
+
+            // Update Success Modal UI
+            document.getElementById('orderIdDisplay').innerText = orderId;
+
+            // Show quantity in service name if > 1
+            const qty = bookingData.quantity;
+            const serviceText = qty > 1 ? `${currentService} (x${qty})` : currentService;
+            document.getElementById('successService').innerText = serviceText;
+
+            document.getElementById('successPaid').innerText = '฿' + payAmount.toLocaleString() + (paymentMode === 'deposit' ? ' (มัดจำ 50%)' : ' (จ่ายเต็ม)');
+            document.getElementById('successBalance').innerText = '฿' + remainingBalance.toLocaleString();
+
+            // Show Success Modal
+            document.getElementById('successOverlay').classList.remove('hidden');
+            document.getElementById('successOverlay').classList.add('flex');
+
+            // Reset Form
+            document.getElementById('bookingForm').reset();
+
+            // --- NEW: Auto-Redirect to Messenger with Updated Message ---
+            Swal.fire({
+                icon: 'success',
+                title: 'ชำระเงินสำเร็จ!',
+                html: '<div class="text-left text-sm text-slate-600 space-y-2">' +
+                    '<p class="font-bold text-slate-800">กรุณาแคปภาพหน้าจอนี้</p>' +
+                    '<p>แล้วส่งเข้าไปในช่องทางเพจเพื่อยืนยันออเดอร์ และป้องกันข้อผิดพลาดที่อาจเกิดขึ้นภายหลัง</p>' +
+                    '</div>',
+                confirmButtonText: 'ตกลง, ไปที่เพจ',
+                confirmButtonColor: '#0d9488', // Mint-600
+                timer: 6000, // Give user time to read
+                timerProgressBar: true
+            }).then((result) => {
+                // Redirect even if timer ends or button clicked
+                window.open('https://m.me/61579883801734', '_blank');
+            });
+        }
+
+        // Helpers
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function closeSuccess() {
+            document.getElementById('successOverlay').classList.add('hidden');
+            document.getElementById('successOverlay').classList.remove('flex');
+        }
+    </script>
+</body>
+</html>
